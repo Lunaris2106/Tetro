@@ -7,9 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: #f1f5f9; font-family: sans-serif; }
+        
+        /* 스크롤바 숨기기 효과 */
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 기본 스크롤바 커스텀 */
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; }
+
         /* number input 화살표 제거 */
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -17,8 +24,8 @@
 </head>
 <body class="min-h-screen pb-12">
 
-    <!-- Header 간소화 -->
-    <header class="bg-slate-950 border-b border-slate-800 py-4 px-4 mb-6">
+    <!-- Header -->
+    <header class="bg-slate-950 py-4 px-4 mb-6">
         <div class="max-w-5xl mx-auto flex items-center justify-between">
             <h1 class="text-xl font-bold text-orange-400">🧩 테트로 퍼즐 계산기</h1>
             <span class="text-sm text-slate-400">활성 칸: <span id="active-count-text" class="text-orange-400 font-bold">0</span></span>
@@ -31,13 +38,19 @@
         <div class="lg:col-span-6 flex flex-col gap-4">
             
             <!-- Presets -->
-            <div class="bg-slate-900 border border-slate-800 p-4">
-                <h3 class="text-sm font-bold mb-2">프리셋</h3>
-                <div class="flex gap-2 overflow-x-auto pb-1" id="presets-container"></div>
+            <div class="bg-slate-900 p-1.5 flex flex-col gap-1.5">
+                <div class="flex items-center gap-1.5">
+                    <div class="flex-1 flex gap-1.5 overflow-x-auto py-0.5 scrollbar-none" id="presets-container"></div>
+                    <button id="toggle-presets-grid-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 text-xs transition-colors flex-shrink-0 rounded-none" title="전체보기">
+                        ▼
+                    </button>
+                </div>
+                <!-- 펼침 그리드: 버튼 텍스트 잘림 현상을 해결하기 위해 CSS 교정됨 -->
+                <div id="presets-grid-expanded" class="hidden grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-1 p-2 bg-slate-950 max-h-[220px] overflow-y-auto"></div>
             </div>
 
             <!-- Puzzle Board -->
-            <div class="bg-slate-900 border border-slate-800 p-4 flex flex-col items-center">
+            <div class="bg-slate-900 p-4 flex flex-col items-center">
                 <div class="w-full flex justify-end mb-2">
                     <label class="flex items-center cursor-pointer gap-2">
                         <input type="checkbox" id="custom-mode-toggle" class="sr-only peer">
@@ -48,22 +61,20 @@
                     </label>
                 </div>
 
-                <!-- Board Wrapper with Refresh Button -->
-                <div class="relative w-full max-w-[380px] aspect-square bg-slate-950 border border-slate-800 p-1 mb-8">
-                    <!-- Grid (gap-0 for no spaces) -->
+                <div class="relative w-full max-w-[380px] aspect-square bg-slate-950 p-1 mb-8">
                     <div id="puzzle-grid" class="grid grid-cols-9 gap-0 h-full w-full"></div>
                 </div>
 
-                <!-- Custom Data Panel (Hidden by default) -->
+                <!-- Custom Data Panel -->
                 <div id="custom-tools-panel" class="w-full border-t border-slate-800 pt-4 hidden">
                     <div class="flex gap-2 mb-2">
-                        <input type="text" id="binary-string-input" class="bg-slate-950 border border-slate-800 text-xs w-full p-2" placeholder="이진수...">
-                        <button id="apply-binary-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs hover:bg-orange-600">적용</button>
+                        <input type="text" id="binary-string-input" class="bg-slate-950 border border-slate-800 text-xs w-full p-2 rounded-none" placeholder="이진수...">
+                        <button id="apply-binary-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs hover:bg-orange-600 rounded-none">적용</button>
                     </div>
                     <div class="flex gap-2">
-                        <button id="refresh-binary-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700">이진수 변환</button>
-                        <button id="export-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700">내보내기</button>
-                        <button id="import-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700">가져오기</button>
+                        <button id="refresh-binary-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700 rounded-none">이진수 변환</button>
+                        <button id="export-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700 rounded-none">내보내기</button>
+                        <button id="import-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700 rounded-none">가져오기</button>
                     </div>
                 </div>
             </div>
@@ -72,28 +83,23 @@
         <!-- Right Side: Settings & Solvers -->
         <div class="lg:col-span-6 flex flex-col gap-4">
             
-            <!-- Inventory Settings (Min ~ Max) -->
-            <div class="bg-slate-900 border border-slate-800 p-4">
-                <h3 class="text-sm font-bold mb-3">조각 수량 조건</h3>
+            <!-- Inventory Settings -->
+            <div class="bg-slate-900 p-4">
                 <div class="flex items-end overflow-x-auto pb-2 w-full custom-scrollbar">
-                    <!-- Sticky Labels -->
-                    <div class="flex flex-col justify-end gap-1.5 pb-2 pr-3 pl-1 sticky left-0 bg-slate-900 z-10 flex-shrink-0">
-                        <div class="h-6 flex items-center justify-end text-[11px] font-bold text-slate-400">Min</div>
-                        <div class="h-6 flex items-center justify-end text-[11px] font-bold text-slate-400">Max</div>
+                    <div class="flex flex-col justify-end gap-2 pb-3 pr-3 pl-1 sticky left-0 bg-slate-900 z-10 flex-shrink-0">
+                        <div class="h-8 flex items-center justify-end text-xs font-bold text-slate-400">Min</div>
+                        <div class="h-8 flex items-center justify-end text-xs font-bold text-slate-400">Max</div>
                     </div>
-                    <!-- Inventory items generated here -->
-                    <div id="tetro-inventory-list" class="flex gap-[1px] bg-slate-800 border border-slate-800 flex-shrink-0">
-                        <!-- Inventory items generated here -->
-                    </div>
+                    <div id="tetro-inventory-list" class="flex gap-[1px] bg-slate-800 flex-shrink-0"></div>
                 </div>
             </div>
 
-            <!-- Solve Button and Clear Button -->
+            <!-- Solve Button -->
             <div class="flex gap-2">
-                <button id="solve-btn" class="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 border border-orange-400 transition-colors">
+                <button id="solve-btn" class="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 border border-orange-400 transition-colors rounded-none">
                     계산하기
                 </button>
-                <button id="clear-board-btn" class="bg-slate-700 hover:bg-slate-600 text-white text-xl font-bold px-6 border border-slate-600 transition-colors" title="보드 비우기">
+                <button id="clear-board-btn" class="bg-slate-700 hover:bg-slate-600 text-white text-xl font-bold px-6 border border-slate-600 transition-colors rounded-none" title="보드 비우기">
                     ↻
                 </button>
             </div>
@@ -102,22 +108,17 @@
 
     <!-- Results Area -->
     <section id="results-area" class="max-w-5xl mx-auto px-4 mt-6 hidden">
-        <div class="bg-slate-900 border border-slate-800 p-4">
-            
-            <!-- Layout Navigator -->
+        <div class="bg-slate-900 p-4">
             <div id="layout-navigator" class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-800 hidden">
-                <div>
-                    <span id="selected-comb-desc" class="text-sm font-bold text-orange-400">조합 정보</span>
-                </div>
+                <div><span id="selected-comb-desc" class="text-sm font-bold text-orange-400">조합 정보</span></div>
                 <div class="flex items-center gap-2">
-                    <button id="prev-layout-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30">◀</button>
+                    <button id="prev-layout-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30 rounded-none">◀</button>
                     <span class="text-xs"><span id="current-layout-idx" class="text-orange-400">0</span> / <span id="total-layouts-count">0</span></span>
-                    <button id="next-layout-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30">▶</button>
+                    <button id="next-layout-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30 rounded-none">▶</button>
                 </div>
             </div>
 
-            <!-- Combinations Table -->
-            <div class="overflow-x-auto border border-slate-800">
+            <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
                         <tr class="bg-slate-950 border-b border-slate-800 uppercase">
@@ -137,18 +138,16 @@
         </div>
     </section>
 
-    <!-- Custom Modal Popup System -->
+    <!-- Modal / Loader -->
     <div id="alert-modal" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 p-6 w-full max-w-sm">
+        <div class="bg-slate-900 p-6 w-full max-w-sm">
             <h3 id="modal-title" class="text-base font-bold mb-2">알림</h3>
             <p id="modal-desc" class="text-xs text-slate-400 mb-4">메시지 내용</p>
             <div class="text-right">
-                <button id="modal-close-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-4 py-2 border border-slate-700">닫기</button>
+                <button id="modal-close-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-4 py-2 border border-slate-700 rounded-none">닫기</button>
             </div>
         </div>
     </div>
-
-    <!-- Solver Loader -->
     <div id="loader-overlay" class="fixed inset-0 bg-slate-950/90 z-50 flex flex-col items-center justify-center hidden">
         <div class="w-12 h-12 border-4 border-slate-800 border-t-orange-500 animate-spin mb-4"></div>
         <p class="text-orange-400 font-bold text-sm">계산 중...</p>
@@ -167,17 +166,103 @@
         };
 
         const PRESETS = [
-            { name: "하트", grid: "000000000001101100011111110111111111011111110001111100000111000000010000000000000" },
-            { name: "검", grid: "000000000000010000000111000000111000000111000000111000011111110000010000000111000" },
-            { name: "다이아", grid: "000000000000111000001111100011111110001111100000111000000010000000000000000000000" },
-            { name: "나무", grid: "000000000000111000001111100000111000000010000000010000000111000000000000000000000" },
-            { name: "사각", grid: "000000000000000000001111110001111110001111110001111110001111110001111110000000000" }
+          { name: "병아리", grid: "000000000000000000000000000000100000001100010000110110000111100000011100000001000" },
+          { name: "닭", grid: "000000000001100000011100001001110011001111111001111111000111110000011100000111000" },
+          { name: "도베르만", grid: "011000000111000000011000000011000000011111111011111110011000110011000110011000110" },
+          { name: "펭귄", grid: "000011000000111000000111100000111000001111100011111110010111010000111000001101100" },
+          { name: "유령", grid: "000011000000111100001111110001101010101101011111111111111111110011111100000111000" },
+          { name: "꽃게", grid: "111000111100000001110101011010101010011111110001111100001111100011111110010000010" },
+          { name: "멜론", grid: "000111000000010000000111000001111100011111110011101110011111110001111100000111000" },
+          { name: "사슴", grid: "000100100000111110000000111000001111001111110011111100111111100101101100001000100" },
+          { name: "선인장", grid: "001000000011010100011010110011111110001111100000010000011111110001111100001111100" },
+          { name: "코끼리", grid: "110000000100110000101111000111111000111111110001111111001111111001111110001100110" },
+          { name: "십자가", grid: "000111000000111000000111000111111111111101111111111111000111000000111000000111000" },
+          { name: "얼굴", grid: "000111000001111100011111110010010010011101110011101110011111110001101100000111000" },
+          { name: "구멍난 하트", grid: "001000100011101110111111111111101111111101111011101110001111100000111000000010000" },
+          { name: "집", grid: "000111000001111100011111110111111111110011111010011110011110010011111010011110010" },
+          { name: "주전자", grid: "000010000000111000110111100011111111011111101001111111001111100000111000001101100" },
+          { name: "곡괭이", grid: "000111110011111100011100000111110000110111000110011100110001110100000111000000011" },
+          { name: "오래된 유령", grid: "000111000001111100001111110011101010011101010011101010011111110010101010010101010" },
+          { name: "헬리콥터", grid: "000000000111101111000010000000111100101111010111111111101111111000100100001111110" },
+          { name: "낙타", grid: "001000000111001100111011110011111111011111111001111111000110011000100001000100001" },
+          { name: "다람쥐", grid: "001000100111000110111000111011100111111110111011110111001111110000111100001111000" },
+          { name: "나비", grid: "100000001100000001111010111011111110011111110001111100011111110011010110001000100" },
+          { name: "고양이", grid: "001010000001110000001110000000100010001110011011111001011111101011111111001111000" },
+          { name: "앵무새", grid: "000111000001110100011111110011110010011111000011111000011111000001111000000110000" },
+          { name: "물고기", grid: "000010000000111000001011101011111111111111111011111111001111101000111000000010000" },
+          { name: "돛단배", grid: "000011000000011100000011110000011000000010000111111111011111110011111110001111100" },
+          { name: "토끼", grid: "011101110010101010011101110011111110110111011110111011111111111011101110001101100" },
+          { name: "참새", grid: "000000100100001110110011111111011110111111110011111100001111000111110000110000000" },
+          { name: "해와 달", grid: "000011100000101110001110111011111011111111011011111011001110111000101110000011100" },
+          { name: "물방울", grid: "000010000000111000001111100011111110010111110010011110011001110001111100000111000" },
+          { name: "버섯", grid: "000111000001101100011010110010111010011111110000111000000111000000111000000111000" },
+          { name: "우산", grid: "000111000001111100011111110111111111100111001000010000000010000001010000001110000" },
+          { name: "고래", grid: "111110000011100000001000000011110000111111001101111011111111111011111011000000001" },
+          { name: "백조", grid: "011000000111000000001000000001000000001011100001111110001100011001111011000110111" },
+          { name: "독수리", grid: "000010000000110000000010000111010111110111011011010110001111100000111000000010000" },
+          { name: "개미", grid: "000001110000001000000001011000001110000001110111001110111111000111111100101010100" },
+          { name: "타조", grid: "010000000110001100010111110011111111001111110000011100000001000000001000000011000" },
+          { name: "여우", grid: "000101000001111100011111110011010110011010110011111110001111100000111000000010000" },
+          { name: "올빼미", grid: "100000001111111111100010001100010001100010001111111111111101111011101110001111100" },
+          { name: "검", grid: "000000011000000111010001110011011100001101000001110000011111000111001100110000000" },
+          { name: "개구리", grid: "011101110010101010010101010011111110111111111111111111111111011011000110001111100" },
+          { name: "튤립", grid: "001010100001010100001111100001101100001111100000111000000010000000111000000010000" },
+          { name: "아늑한 집", grid: "000010000000111000001111100011111110111111111010011110010010010011110110011110010" },
+          { name: "네이트람", grid: "000101000001101100000101000011111110010111010111010111111111111011000110001101100" },
+          { name: "상급 네이트람", grid: "001000100011000110001101100000101000001111100011010110111111111011000110001111100" },
+          { name: "고대 병기 13호", grid: "000000100000111100001111110010111010011111110011111110011010110011111110001000100" },
+          { name: "상급 고대 병기 13호", grid: "110010011111111111011111110010010010111000111011101110011101110111111111110010011" },
+          { name: "화산대감", grid: "100111001110101011110101011110101011100111001001111100001010100001111100000111000" },
+          { name: "상급 화산대감", grid: "000111000001101100011111110010010111000000111010010111011111111000000111000000011" },
+          { name: "여명의 사제", grid: "000111000000101000001101100111101111110000011111000111011101110011000110011111110" },
+          { name: "특별 네이트람", grid: "100000001111101111001101100001000100011111110110010011111111111011010110001000100" },
+          { name: "특별 고대 병기 13호", grid: "001010100001010100011111110010110010010010110011111110011111110111111111100100101" },
+          { name: "특별 화산대감", grid: "000000110000001111001100001011111001000011001011001111111100011000111111000001111" },
+          { name: "기안티", grid: "111000111001101100111101111010111010011111110100111001110111011011111110000111000" },
+          { name: "불칸", grid: "111101111111101111111111111111111111010010010111010111011111110001000100011111110" },
+          { name: "실바드", grid: "000111000011111110111111111111010111110101011111111111011111110111010111101010101" },
+          { name: "칠흑의 기사", grid: "111000111001010100011111110101010101101010101101010101111111111011111110001111100" },
+          { name: "칼리아의 환영", grid: "111010111001010100111010111100010001111111111111010111001111100000111000001101100" },
+          { name: "푸른 여신의 석상", grid: "000010000110111011111111111011111110011010110011111110011000110111111111000111000" },
+          { name: "시지프스", grid: "111110000100111000001101100011101110111010111111111111110101011010101010011111110" },
+          { name: "아르고스", grid: "000001100001111110000001111000111001000001001100001111101001111101001111111111111" },
+          { name: "고대병기 4호", grid: "111101111101101101110111011011111110000111000000111000111101111100000001110000011" },
+          { name: "아르도르", grid: "110000011111000111001101100100111001111111111100111001110010011011111110000111000" },
+          { name: "악테온", grid: "000111000110010011100111001111111111000111000111111111001111100011111110010000010" },
+          { name: "카르킨", grid: "000000000001101100001101100000101000111101111100111001100111001011111110010111010" },
+          { name: "평행 세계 칼리아의 환영", grid: "011110000000111000110011100011111110001110110000111011111101101011110111000111011" },
+          { name: "평행 세계 불칸", grid: "111000111111101111111111111011111110010111010110010011111111111100010001110000011" },
+          { name: "평행 세계 실바드", grid: "001111100011111110110101011111010111111111111111111111011111110111111111101010101" },
+          { name: "평행 세계 기안티", grid: "111101111001101100110101011011111110100111001111111111000111000110111011011111110" },
+          { name: "하수인의 램프", grid: "000010000000111000111111111101111110101111110011111100000111000000010000000111000" },
+          { name: "황혼의 마인", grid: "001111100101111101101111101111111111010010010011010110011111110011000110001111100" },
+          { name: "야자 나무 섬", grid: "000000110001111100011010000000010000000010000000111000001111100011111110111111111" },
+          { name: "크라켄", grid: "000111000001111101101010101101111111111111100001111110011010010010011010110001011" },
+          { name: "마녀 모자", grid: "000001111000011100000111100001111000011111110110000011100000001111111111011111110" },
+          { name: "호박", grid: "000010000011111110110111011100010001111111111101010101110000011011111110001111100" },
+          { name: "시리우스", grid: "000111000001111100011100110111001111111011111111001111011100110001111100000111000" },
+          { name: "마독성 경비 기계", grid: "010010010110010011111111111101101101100111001100010001001111100001000100001000100" },
+          { name: "거북이", grid: "000000011000000111001100101011110111111111100111111100111111100111111100110011000" },
+          { name: "8분음표", grid: "000001100000001100000001110000001011000001001011101000111111000111111000011110000" },
+          { name: "달리기", grid: "000011000000011001001111101111111111100111000100010000000111100000100100011100100" },
+          { name: "트로피", grid: "011000110010111010010111010011111110001111100000111000000111000000010000000111000" },
+          { name: "아쿠아리스 성", grid: "000010000000111000100111001110111011110010011110111011111101111111101111111101111" },
+          { name: "순록", grid: "111000111011000110001000100001101100000111000011111110001010100001111100000101000" },
+          { name: "나무", grid: "000010000000111000000111000001111100001111100011101110011111110000010000000010000" },
+          { name: "평행 세계 메카라곤", grid: "111010111101111101110111011111101111100000001111000111111111111010111010000010000" },
+          { name: "평행 세계 스텔리아", grid: "000000111000001111000111011011110111111111111101000111101001111000011111011111111" },
+          { name: "평행 세계 카오스의 수호룡", grid: "000110011001101110011101100000111111001111111011011111111111111000001110011111100" },
+          { name: "해적모자", grid: "000000000000010000000111000001111100011010110111101111111010111011111110000000000" },
+          { name: "평행 세계 푸른 여신의 석상", grid: "100000001110010011111111111101010101111111111011000110111111111101111101100000001" },
+          { name: "무한의 미궁 문", grid: "011111110010000010011111110011111110010111110011111110011111110010000010011111110" },
+          { name: "미로", grid: "111111111110000000110111111110111111110101011111111011111111011000000011111111111" },
+          { name: "평행 세계 시지프스", grid: "011000110111111111111111111100111001111111111101010101111111111011010110001111100" },
+          { name: "아기 홍학", grid: "000011100000011110000010010001111000011111100011111100001111000000010000000011000" }
         ];
 
         let boardState = new Int8Array(81);
         let customModeActive = false;
         
-        // 민맥스 제약 조건 (수량 이상, 이하)
         let inventoryLimits = {
             attack: { min: 0, max: 20 }, defense: { min: 0, max: 20 }, hp: { min: 0, max: 20 },
             evasion: { min: 0, max: 20 }, accuracy: { min: 0, max: 20 }, resistance: { min: 0, max: 20 }, crit: { min: 0, max: 20 }
@@ -250,11 +335,9 @@
             grid.innerHTML = '';
             for (let i = 0; i < 81; i++) {
                 const cell = document.createElement('div');
-                // 둥근 모서리 및 빈공간(gap) 제거, 각진 보더 (텍스트 관련 속성 제거)
                 cell.className = "flex items-center justify-center select-none cursor-pointer box-border ";
                 
                 if (solverLayout && solverLayout[i] > 0) {
-                    // 고유번호(val)와 조각종류(pId) 분리 추출
                     const val = solverLayout[i];
                     const pId = val % 10;
                     let tDef = Object.values(PIECE_DEFS).find(d => d.id === pId);
@@ -264,7 +347,6 @@
                     const r = Math.floor(i / 9);
                     const c = i % 9;
                     
-                    // 같은 색상이더라도 서로 다른 조각(val이 다름)이면 흰색 테두리 출력
                     let bt = (r === 0 || solverLayout[(r - 1) * 9 + c] !== val) ? 'border-t-[2px] border-t-white z-10' : 'border-t-[1px] border-t-slate-900/60';
                     let bb = (r === 8 || solverLayout[(r + 1) * 9 + c] !== val) ? 'border-b-[2px] border-b-white z-10' : 'border-b-[1px] border-b-slate-900/60';
                     let bl = (c === 0 || solverLayout[r * 9 + (c - 1)] !== val) ? 'border-l-[2px] border-l-white z-10' : 'border-l-[1px] border-l-slate-900/60';
@@ -294,25 +376,48 @@
         }
 
         function setupUI() {
-            // Presets
             const pCont = document.getElementById('presets-container');
-            PRESETS.forEach(p => {
-                const b = document.createElement('button');
-                b.className = "whitespace-nowrap bg-slate-800 border border-slate-700 px-3 py-1.5 text-xs hover:bg-slate-700";
-                b.innerText = p.name;
-                b.onclick = () => { loadBoardPreset(p); updateBoardUI(); };
-                pCont.appendChild(b);
+            const pGridExpanded = document.getElementById('presets-grid-expanded');
+            
+            PRESETS.forEach((p, index) => {
+                const bScroll = document.createElement('button');
+                bScroll.className = "whitespace-nowrap bg-slate-800 px-3 py-1.5 text-xs hover:bg-slate-700 text-slate-200 transition-colors flex-shrink-0 rounded-none";
+                bScroll.innerText = p.name;
+                bScroll.onclick = () => { loadBoardPreset(p); updateBoardUI(); };
+                pCont.appendChild(bScroll);
+
+                // 글자 잘림 해결: 명시적으로 블록 형태(block), 높이(h-8) 및 수직 중앙정렬(leading-8) 적용
+                const bGrid = document.createElement('button');
+                bGrid.className = "block w-full h-8 leading-8 bg-slate-800 px-1 text-[11px] sm:text-xs hover:bg-slate-700 text-slate-200 transition-colors truncate text-center rounded-none";
+                bGrid.innerText = p.name;
+                bGrid.title = p.name;
+                bGrid.onclick = () => {
+                    loadBoardPreset(p);
+                    updateBoardUI();
+                    pGridExpanded.classList.add('hidden');
+                    document.getElementById('toggle-presets-grid-btn').innerText = '▼';
+                };
+                pGridExpanded.appendChild(bGrid);
             });
 
-            // Inventory List (Min ~ Max)
+            const togglePresetsBtn = document.getElementById('toggle-presets-grid-btn');
+            togglePresetsBtn.onclick = () => {
+                const isHidden = pGridExpanded.classList.contains('hidden');
+                if (isHidden) {
+                    pGridExpanded.classList.remove('hidden');
+                    togglePresetsBtn.innerText = '▲';
+                } else {
+                    pGridExpanded.classList.add('hidden');
+                    togglePresetsBtn.innerText = '▼';
+                }
+            };
+
             const iCont = document.getElementById('tetro-inventory-list');
             PIECE_TYPES.forEach(type => {
                 const def = PIECE_DEFS[type];
                 const div = document.createElement('div');
-                // 각진 모양(rounded-none), 테두리는 부모의 1px gap으로 처리
-                div.className = "flex flex-col items-center bg-slate-950 p-2 w-[56px] sm:w-[64px]";
+                div.className = "flex flex-col items-center bg-slate-950 p-3 w-[72px] sm:w-[80px] flex-shrink-0";
                 
-                // 4x4 캔버스로 미니 테트로 이미지 렌더링 (가운데 정렬 연산 포함)
                 const blocks = def.base;
                 let minR = Math.min(...blocks.map(b => b[0]));
                 let maxR = Math.max(...blocks.map(b => b[0]));
@@ -321,10 +426,9 @@
                 let offsetR = Math.floor((4 - (maxR - minR + 1)) / 2) - minR;
                 let offsetC = Math.floor((4 - (maxC - minC + 1)) / 2) - minC;
 
-                let miniGridHTML = `<div class="grid grid-rows-4 grid-cols-4 gap-[1px] w-6 h-6 mb-2">`;
+                let miniGridHTML = `<div class="grid grid-rows-4 grid-cols-4 gap-[1px] w-8 h-8 mb-2">`;
                 for (let r = 0; r < 4; r++) {
                     for (let c = 0; c < 4; c++) {
-                        // 오프셋을 적용하여 박스 정중앙에 퍼즐 조각이 그려지도록 배치
                         const hasBlock = blocks.some(p => (p[0] + offsetR) === r && (p[1] + offsetC) === c);
                         const blockBg = hasBlock ? def.bgClass : 'bg-transparent';
                         miniGridHTML += `<div class="${blockBg}"></div>`;
@@ -332,19 +436,17 @@
                 }
                 miniGridHTML += `</div>`;
 
-                // 둥근 모서리 삭제(rounded-none) 및 내부 간격 최적화
                 div.innerHTML = `
                     ${miniGridHTML}
-                    <span class="text-xs font-bold mb-3 text-slate-200">${def.name}</span>
-                    <div class="flex flex-col gap-1.5 w-full">
-                        <input type="number" id="min-${type}" class="w-full h-6 bg-slate-900 border border-slate-700 text-xs text-center text-slate-200 focus:border-orange-500 outline-none rounded-none p-0" value="0" min="0" max="20" onchange="updateLimit('${type}', 'min', this.value)">
-                        <input type="number" id="max-${type}" class="w-full h-6 bg-slate-900 border border-slate-700 text-xs text-center text-slate-200 focus:border-orange-500 outline-none rounded-none p-0" value="20" min="0" max="20" onchange="updateLimit('${type}', 'max', this.value)">
+                    <span class="text-sm font-bold mb-3 text-slate-200 select-none">${def.name}</span>
+                    <div class="flex flex-col gap-2 w-full">
+                        <input type="number" id="min-${type}" class="w-full h-8 bg-slate-900 border border-slate-700 text-sm font-bold text-center text-slate-200 focus:border-orange-500 outline-none rounded-none p-0" value="0" min="0" max="20" onchange="updateLimit('${type}', 'min', this.value)">
+                        <input type="number" id="max-${type}" class="w-full h-8 bg-slate-900 border border-slate-700 text-sm font-bold text-center text-slate-200 focus:border-orange-500 outline-none rounded-none p-0" value="20" min="0" max="20" onchange="updateLimit('${type}', 'max', this.value)">
                     </div>
                 `;
                 iCont.appendChild(div);
             });
 
-            // Toggles & Buttons
             document.getElementById('custom-mode-toggle').onchange = function() {
                 customModeActive = this.checked;
                 document.getElementById('custom-tools-panel').style.display = customModeActive ? 'block' : 'none';
@@ -357,7 +459,6 @@
                 boardState.fill(0); updateActiveCount(); updateBoardUI(); resetResults();
             };
 
-            // Custom Binary Data
             document.getElementById('apply-binary-btn').onclick = () => {
                 const raw = document.getElementById('binary-string-input').value.trim();
                 if (raw.length !== 81 || !/^[01]+$/.test(raw)) return showCustomAlert("오류", "81자리의 0과 1로 된 문자열이 필요합니다.");
@@ -385,11 +486,9 @@
                 f.click();
             };
 
-            // Navigator
             document.getElementById('prev-layout-btn').onclick = () => navLayout(-1);
             document.getElementById('next-layout-btn').onclick = () => navLayout(1);
 
-            // Sorting
             document.querySelectorAll('th[data-sort]').forEach(th => {
                 th.onclick = function() {
                     const f = this.dataset.sort;
@@ -408,7 +507,6 @@
             document.getElementById(`${bound}-${type}`).value = v;
         }
 
-        // Solver Logic - 고유번호 저장을 위해 Int16Array로 확장
         let sActive = [], sGrid = new Int16Array(81), gMap = {}, totalFound = 0, stepCnt = 0;
         const MAX_STEPS = 150000, MAX_SOLS = 250;
 
@@ -449,13 +547,11 @@
             selectComb(0);
         }
 
-        // placedCount 파라미터를 추가하여 조각이 배치될 때마다 1씩 증가시킨 고유 ID 부여
         function solveRecurse(ptr, counts, placedCount) {
             if (totalFound >= MAX_SOLS || stepCnt >= MAX_STEPS) return;
             stepCnt++;
 
             if (ptr >= sActive.length) {
-                // Min 조건 검사 (배치 완료 후)
                 for (let type of PIECE_TYPES) {
                     if (counts[type] < inventoryLimits[type].min) return;
                 }
@@ -472,11 +568,9 @@
             const r = Math.floor(idx / 9), c = idx % 9;
 
             for (let type of PIECE_TYPES) {
-                // Max 조건 검사 (배치 전 가지치기)
                 if (counts[type] >= inventoryLimits[type].max) continue;
 
                 const pId = PIECE_DEFS[type].id;
-                // 고유값(val) 생성 = 몇 번째 조각인지 식별 + 조각 타입 아이디
                 const val = placedCount * 10 + pId;
                 
                 for (let rot of allUniqueRotations[type]) {
