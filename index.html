@@ -24,18 +24,18 @@
 </head>
 <body class="min-h-screen pb-12">
 
-    <!-- Header -->
-    <header class="bg-slate-950 py-4 px-4 mb-6">
-        <div class="max-w-5xl mx-auto flex items-center justify-between">
-            <h1 class="text-xl font-bold text-orange-400">🧩 테트로 퍼즐 계산기</h1>
-            <span class="text-sm text-slate-400">활성 칸: <span id="active-count-text" class="text-orange-400 font-bold">0</span></span>
+    <!-- Header (타이틀 중앙 정렬 및 불필요 요소 삭제, 화이트 테마) -->
+    <header class="bg-slate-950 py-4 px-4 mb-4">
+        <div class="max-w-5xl mx-auto flex justify-center">
+            <h1 class="text-xl font-bold text-white tracking-wider">테트로 퍼즐 계산기</h1>
         </div>
     </header>
 
-    <main class="max-w-5xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- 간격을 최소화하기 위해 모바일 gap-1.5 적용 -->
+    <main class="max-w-5xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-1.5 lg:gap-6">
         
         <!-- Left Side: Board & Presets -->
-        <div class="lg:col-span-6 flex flex-col gap-4">
+        <div class="lg:col-span-6 flex flex-col gap-1.5">
             
             <!-- Presets -->
             <div class="bg-slate-900 p-1.5 flex flex-col gap-1.5">
@@ -45,46 +45,47 @@
                         ▼
                     </button>
                 </div>
-                <!-- 펼침 그리드: 버튼 텍스트 잘림 현상을 해결하기 위해 CSS 교정됨 -->
                 <div id="presets-grid-expanded" class="hidden grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-1 p-2 bg-slate-950 max-h-[220px] overflow-y-auto"></div>
             </div>
 
             <!-- Puzzle Board -->
-            <div class="bg-slate-900 p-4 flex flex-col items-center">
+            <div class="bg-slate-900 p-2 sm:p-4 flex flex-col items-center">
                 <div class="w-full flex justify-end mb-2">
-                    <label class="flex items-center cursor-pointer gap-2">
-                        <input type="checkbox" id="custom-mode-toggle" class="sr-only peer">
-                        <div class="w-8 h-4 bg-slate-700 peer-checked:bg-orange-500 transition-colors border border-slate-600 relative">
-                            <div class="absolute left-0 top-0 w-4 h-full bg-white transition-transform peer-checked:translate-x-full border border-slate-400"></div>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="custom-mode-toggle" class="sr-only peer cursor-pointer">
+                        <!-- 화이트 테마 토글 버튼 -->
+                        <div class="w-8 h-4 bg-slate-700 peer-checked:bg-white transition-colors border border-slate-600 relative cursor-pointer">
+                            <div class="absolute left-0 top-0 w-4 h-full bg-slate-400 transition-transform peer-checked:translate-x-full peer-checked:bg-slate-900 border border-slate-500"></div>
                         </div>
-                        <span class="text-xs">커스텀 모드</span>
+                        <span class="text-xs cursor-pointer">커스텀 모드</span>
                     </label>
                 </div>
 
-                <div class="relative w-full max-w-[380px] aspect-square bg-slate-950 p-1 mb-8">
+                <!-- 보드판 하단 불필요한 마진(mb-8) 삭제 -->
+                <div class="relative w-full max-w-[380px] aspect-square bg-slate-950 p-1">
                     <div id="puzzle-grid" class="grid grid-cols-9 gap-0 h-full w-full"></div>
                 </div>
 
                 <!-- Custom Data Panel -->
-                <div id="custom-tools-panel" class="w-full border-t border-slate-800 pt-4 hidden">
+                <div id="custom-tools-panel" class="w-full border-t border-slate-800 pt-3 mt-3 hidden">
                     <div class="flex gap-2 mb-2">
-                        <input type="text" id="binary-string-input" class="bg-slate-950 border border-slate-800 text-xs w-full p-2 rounded-none" placeholder="이진수...">
-                        <button id="apply-binary-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs hover:bg-orange-600 rounded-none">적용</button>
+                        <input type="text" id="binary-string-input" class="bg-slate-950 border border-slate-800 text-xs w-full p-2 rounded-none focus:outline-none focus:border-white" placeholder="이진수...">
+                        <button id="apply-binary-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs hover:bg-slate-700 hover:text-white rounded-none">적용</button>
                     </div>
                     <div class="flex gap-2">
-                        <button id="refresh-binary-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700 rounded-none">이진수 변환</button>
-                        <button id="export-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700 rounded-none">내보내기</button>
-                        <button id="import-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700 rounded-none">가져오기</button>
+                        <button id="refresh-binary-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700 hover:text-white rounded-none">이진수 변환</button>
+                        <button id="export-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700 hover:text-white rounded-none">내보내기</button>
+                        <button id="import-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700 hover:text-white rounded-none">가져오기</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Right Side: Settings & Solvers -->
-        <div class="lg:col-span-6 flex flex-col gap-4">
+        <div class="lg:col-span-6 flex flex-col gap-1.5">
             
             <!-- Inventory Settings -->
-            <div class="bg-slate-900 p-4">
+            <div class="bg-slate-900 p-2 sm:p-4">
                 <div class="flex items-end overflow-x-auto pb-2 w-full custom-scrollbar">
                     <div class="flex flex-col justify-end gap-2 pb-3 pr-3 pl-1 sticky left-0 bg-slate-900 z-10 flex-shrink-0">
                         <div class="h-8 flex items-center justify-end text-xs font-bold text-slate-400">Min</div>
@@ -94,9 +95,9 @@
                 </div>
             </div>
 
-            <!-- Solve Button -->
+            <!-- Solve Button (화이트 테마) -->
             <div class="flex gap-2">
-                <button id="solve-btn" class="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 border border-orange-400 transition-colors rounded-none">
+                <button id="solve-btn" class="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-extrabold text-base py-4 border border-white transition-colors rounded-none">
                     계산하기
                 </button>
                 <button id="clear-board-btn" class="bg-slate-700 hover:bg-slate-600 text-white text-xl font-bold px-6 border border-slate-600 transition-colors rounded-none" title="보드 비우기">
@@ -107,14 +108,14 @@
     </main>
 
     <!-- Results Area -->
-    <section id="results-area" class="max-w-5xl mx-auto px-4 mt-6 hidden">
+    <section id="results-area" class="max-w-5xl mx-auto px-4 mt-1.5 lg:mt-6 hidden">
         <div class="bg-slate-900 p-4">
             <div id="layout-navigator" class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-800 hidden">
-                <div><span id="selected-comb-desc" class="text-sm font-bold text-orange-400">조합 정보</span></div>
+                <div><span id="selected-comb-desc" class="text-sm font-bold text-white">조합 정보</span></div>
                 <div class="flex items-center gap-2">
-                    <button id="prev-layout-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30 rounded-none">◀</button>
-                    <span class="text-xs"><span id="current-layout-idx" class="text-orange-400">0</span> / <span id="total-layouts-count">0</span></span>
-                    <button id="next-layout-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30 rounded-none">▶</button>
+                    <button id="prev-layout-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30 rounded-none">◀</button>
+                    <span class="text-xs"><span id="current-layout-idx" class="text-white font-bold">0</span> / <span id="total-layouts-count" class="text-slate-300">0</span></span>
+                    <button id="next-layout-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30 rounded-none">▶</button>
                 </div>
             </div>
 
@@ -122,14 +123,14 @@
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
                         <tr class="bg-slate-950 border-b border-slate-800 uppercase">
-                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="attack">공격 <span class="sort-icon"></span></th>
-                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="defense">방어 <span class="sort-icon"></span></th>
-                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="hp">체력 <span class="sort-icon"></span></th>
-                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="evasion">회피 <span class="sort-icon"></span></th>
-                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="accuracy">명중 <span class="sort-icon"></span></th>
-                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="resistance">저항 <span class="sort-icon"></span></th>
-                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="crit">크리 <span class="sort-icon"></span></th>
-                            <th class="p-2 cursor-pointer hover:text-orange-400 text-right" data-sort="layouts">배치 개수 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-white transition-colors" data-sort="attack">공격 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-white transition-colors" data-sort="defense">방어 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-white transition-colors" data-sort="hp">체력 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-white transition-colors" data-sort="evasion">회피 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-white transition-colors" data-sort="accuracy">명중 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-white transition-colors" data-sort="resistance">저항 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-white transition-colors" data-sort="crit">크리 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-white transition-colors text-right" data-sort="layouts">배치 개수 <span class="sort-icon"></span></th>
                         </tr>
                     </thead>
                     <tbody id="combinations-tbody" class="divide-y divide-slate-800"></tbody>
@@ -140,17 +141,18 @@
 
     <!-- Modal / Loader -->
     <div id="alert-modal" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 p-6 w-full max-w-sm">
-            <h3 id="modal-title" class="text-base font-bold mb-2">알림</h3>
-            <p id="modal-desc" class="text-xs text-slate-400 mb-4">메시지 내용</p>
+        <div class="bg-slate-900 p-6 w-full max-w-sm border border-slate-700">
+            <h3 id="modal-title" class="text-base font-bold mb-2 text-white">알림</h3>
+            <p id="modal-desc" class="text-xs text-slate-400 mb-6">메시지 내용</p>
             <div class="text-right">
-                <button id="modal-close-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-4 py-2 border border-slate-700 rounded-none">닫기</button>
+                <button id="modal-close-btn" class="bg-white hover:bg-slate-200 text-slate-900 font-bold text-xs px-4 py-2 rounded-none">닫기</button>
             </div>
         </div>
     </div>
     <div id="loader-overlay" class="fixed inset-0 bg-slate-950/90 z-50 flex flex-col items-center justify-center hidden">
-        <div class="w-12 h-12 border-4 border-slate-800 border-t-orange-500 animate-spin mb-4"></div>
-        <p class="text-orange-400 font-bold text-sm">계산 중...</p>
+        <!-- 화이트 테마 로더 -->
+        <div class="w-12 h-12 border-4 border-slate-800 border-t-white animate-spin mb-4"></div>
+        <p class="text-white font-bold text-sm tracking-widest">계산 중...</p>
     </div>
 
     <script>
@@ -315,7 +317,6 @@
 
         function loadBoardPreset(preset) {
             for (let i = 0; i < 81; i++) boardState[i] = preset.grid[i] === '1' ? 1 : 0;
-            updateActiveCount();
             resetResults();
         }
 
@@ -324,18 +325,16 @@
             document.getElementById('layout-navigator').classList.add('hidden');
         }
 
-        function updateActiveCount() {
-            let cnt = 0;
-            for (let i = 0; i < 81; i++) if (boardState[i] === 1) cnt++;
-            document.getElementById('active-count-text').innerText = cnt;
-        }
-
         function updateBoardUI(solverLayout = null) {
             const grid = document.getElementById('puzzle-grid');
             grid.innerHTML = '';
+            
+            // 커스텀 모드 여부에 따른 마우스 포인터 처리
+            let cursorStyle = (customModeActive && !solverLayout) ? "cursor-pointer" : "cursor-default";
+
             for (let i = 0; i < 81; i++) {
                 const cell = document.createElement('div');
-                cell.className = "flex items-center justify-center select-none cursor-pointer box-border ";
+                cell.className = `flex items-center justify-center select-none box-border ${cursorStyle} `;
                 
                 if (solverLayout && solverLayout[i] > 0) {
                     const val = solverLayout[i];
@@ -363,10 +362,10 @@
 
                 cell.dataset.idx = i;
                 cell.onclick = function() {
-                    if (customModeActive || !solverLayout) {
+                    // 1번 요청: 커스텀 모드일 때만 터치(클릭) 동작 허용
+                    if (customModeActive && !solverLayout) {
                         const idx = parseInt(this.dataset.idx);
                         boardState[idx] = boardState[idx] === 1 ? 0 : 1;
-                        updateActiveCount();
                         updateBoardUI();
                         document.getElementById('binary-string-input').value = Array.from(boardState).join('');
                     }
@@ -381,14 +380,13 @@
             
             PRESETS.forEach((p, index) => {
                 const bScroll = document.createElement('button');
-                bScroll.className = "whitespace-nowrap bg-slate-800 px-3 py-1.5 text-xs hover:bg-slate-700 text-slate-200 transition-colors flex-shrink-0 rounded-none";
+                bScroll.className = "whitespace-nowrap bg-slate-800 px-3 py-1.5 text-xs hover:bg-slate-700 text-white transition-colors flex-shrink-0 rounded-none border border-transparent hover:border-slate-500";
                 bScroll.innerText = p.name;
                 bScroll.onclick = () => { loadBoardPreset(p); updateBoardUI(); };
                 pCont.appendChild(bScroll);
 
-                // 글자 잘림 해결: 명시적으로 블록 형태(block), 높이(h-8) 및 수직 중앙정렬(leading-8) 적용
                 const bGrid = document.createElement('button');
-                bGrid.className = "block w-full h-8 leading-8 bg-slate-800 px-1 text-[11px] sm:text-xs hover:bg-slate-700 text-slate-200 transition-colors truncate text-center rounded-none";
+                bGrid.className = "block w-full h-8 leading-8 bg-slate-800 px-1 text-[11px] sm:text-xs hover:bg-slate-700 text-white transition-colors truncate text-center rounded-none border border-transparent hover:border-slate-500";
                 bGrid.innerText = p.name;
                 bGrid.title = p.name;
                 bGrid.onclick = () => {
@@ -438,10 +436,10 @@
 
                 div.innerHTML = `
                     ${miniGridHTML}
-                    <span class="text-sm font-bold mb-3 text-slate-200 select-none">${def.name}</span>
+                    <span class="text-sm font-bold mb-3 text-white select-none">${def.name}</span>
                     <div class="flex flex-col gap-2 w-full">
-                        <input type="number" id="min-${type}" class="w-full h-8 bg-slate-900 border border-slate-700 text-sm font-bold text-center text-slate-200 focus:border-orange-500 outline-none rounded-none p-0" value="0" min="0" max="20" onchange="updateLimit('${type}', 'min', this.value)">
-                        <input type="number" id="max-${type}" class="w-full h-8 bg-slate-900 border border-slate-700 text-sm font-bold text-center text-slate-200 focus:border-orange-500 outline-none rounded-none p-0" value="20" min="0" max="20" onchange="updateLimit('${type}', 'max', this.value)">
+                        <input type="number" id="min-${type}" class="w-full h-8 bg-slate-900 border border-slate-700 text-sm font-bold text-center text-white focus:border-white outline-none rounded-none p-0" value="0" min="0" max="20" onchange="updateLimit('${type}', 'min', this.value)">
+                        <input type="number" id="max-${type}" class="w-full h-8 bg-slate-900 border border-slate-700 text-sm font-bold text-center text-white focus:border-white outline-none rounded-none p-0" value="20" min="0" max="20" onchange="updateLimit('${type}', 'max', this.value)">
                     </div>
                 `;
                 iCont.appendChild(div);
@@ -451,19 +449,20 @@
                 customModeActive = this.checked;
                 document.getElementById('custom-tools-panel').style.display = customModeActive ? 'block' : 'none';
                 if(customModeActive) document.getElementById('binary-string-input').value = Array.from(boardState).join('');
+                updateBoardUI(); // 커서 스타일 즉각 반영을 위한 호출
             };
 
             document.getElementById('modal-close-btn').onclick = () => document.getElementById('alert-modal').classList.add('hidden');
             document.getElementById('solve-btn').onclick = startSolver;
             document.getElementById('clear-board-btn').onclick = () => {
-                boardState.fill(0); updateActiveCount(); updateBoardUI(); resetResults();
+                boardState.fill(0); updateBoardUI(); resetResults();
             };
 
             document.getElementById('apply-binary-btn').onclick = () => {
                 const raw = document.getElementById('binary-string-input').value.trim();
                 if (raw.length !== 81 || !/^[01]+$/.test(raw)) return showCustomAlert("오류", "81자리의 0과 1로 된 문자열이 필요합니다.");
                 for (let i = 0; i < 81; i++) boardState[i] = raw[i] === '1' ? 1 : 0;
-                updateActiveCount(); updateBoardUI(); showCustomAlert("성공", "적용되었습니다.");
+                updateBoardUI(); showCustomAlert("성공", "적용되었습니다.");
             };
             document.getElementById('refresh-binary-btn').onclick = () => document.getElementById('binary-string-input').value = Array.from(boardState).join('');
             
@@ -507,8 +506,9 @@
             document.getElementById(`${bound}-${type}`).value = v;
         }
 
+        // 2번 요청: 최대 정답 갯수 제한 대폭 해제 (5만 개 솔루션, 5백만 번 연산)
         let sActive = [], sGrid = new Int16Array(81), gMap = {}, totalFound = 0, stepCnt = 0;
-        const MAX_STEPS = 150000, MAX_SOLS = 250;
+        const MAX_STEPS = 5000000, MAX_SOLS = 50000;
 
         function startSolver() {
             let cnt = 0; sActive = [];
@@ -517,6 +517,8 @@
             if (cnt % 4 !== 0) return showCustomAlert("오류", `활성 칸(${cnt}개)이 4의 배수가 아닙니다.`);
 
             document.getElementById('loader-overlay').classList.remove('hidden');
+            
+            // 로더가 보일 수 있도록 아주 약간의 딜레이 후 실행
             setTimeout(runBacktrack, 50);
         }
 
@@ -606,7 +608,7 @@
             tb.innerHTML = '';
             combinationsList.forEach((c, idx) => {
                 const tr = document.createElement('tr');
-                tr.className = `cursor-pointer hover:bg-slate-800 transition-colors ${selectedCombinationIndex === idx ? 'bg-orange-900/30 border-l-2 border-orange-500' : ''}`;
+                tr.className = `cursor-pointer hover:bg-slate-800 transition-colors ${selectedCombinationIndex === idx ? 'bg-slate-700 border-l-2 border-white' : ''}`;
                 tr.onclick = () => selectComb(idx);
                 
                 let tdStr = '';
@@ -614,7 +616,7 @@
                     const cnt = c.counts[t];
                     tdStr += `<td class="p-2" style="color:${cnt>0 ? PIECE_DEFS[t].color : '#475569'}; font-weight:${cnt>0?'bold':'normal'}">${cnt}</td>`;
                 });
-                tr.innerHTML = `${tdStr}<td class="p-2 text-right text-orange-400 font-bold">${c.layouts.length}</td>`;
+                tr.innerHTML = `${tdStr}<td class="p-2 text-right text-white font-bold">${c.layouts.length}</td>`;
                 tb.appendChild(tr);
             });
         }
