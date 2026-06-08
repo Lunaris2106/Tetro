@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>테트로 퍼즐 계산기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f1f5f9; font-family: sans-serif; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; }
+        /* number input 화살표 제거 */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- Header 간소화 -->
+    <header class="bg-slate-950 border-b border-slate-800 py-4 px-4 mb-6">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <h1 class="text-xl font-bold text-orange-400">🧩 테트로 퍼즐 계산기</h1>
+            <span class="text-sm text-slate-400">활성 칸: <span id="active-count-text" class="text-orange-400 font-bold">0</span></span>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Side: Board & Presets -->
+        <div class="lg:col-span-6 flex flex-col gap-4">
+            
+            <!-- Presets -->
+            <div class="bg-slate-900 border border-slate-800 p-4">
+                <h3 class="text-sm font-bold mb-2">프리셋</h3>
+                <div class="flex gap-2 overflow-x-auto pb-1" id="presets-container"></div>
+            </div>
+
+            <!-- Puzzle Board -->
+            <div class="bg-slate-900 border border-slate-800 p-4 flex flex-col items-center">
+                <div class="w-full flex justify-end mb-2">
+                    <label class="flex items-center cursor-pointer gap-2">
+                        <input type="checkbox" id="custom-mode-toggle" class="sr-only peer">
+                        <div class="w-8 h-4 bg-slate-700 peer-checked:bg-orange-500 transition-colors border border-slate-600 relative">
+                            <div class="absolute left-0 top-0 w-4 h-full bg-white transition-transform peer-checked:translate-x-full border border-slate-400"></div>
+                        </div>
+                        <span class="text-xs">커스텀 모드</span>
+                    </label>
+                </div>
+
+                <!-- Board Wrapper with Refresh Button -->
+                <div class="relative w-full max-w-[380px] aspect-square bg-slate-950 border border-slate-800 p-1 mb-8">
+                    <!-- Grid (gap-0 for no spaces) -->
+                    <div id="puzzle-grid" class="grid grid-cols-9 gap-0 h-full w-full"></div>
+                </div>
+
+                <!-- Custom Data Panel (Hidden by default) -->
+                <div id="custom-tools-panel" class="w-full border-t border-slate-800 pt-4 hidden">
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="binary-string-input" class="bg-slate-950 border border-slate-800 text-xs w-full p-2" placeholder="이진수...">
+                        <button id="apply-binary-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs hover:bg-orange-600">적용</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="refresh-binary-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700">이진수 변환</button>
+                        <button id="export-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700">내보내기</button>
+                        <button id="import-file-btn" class="flex-1 bg-slate-800 border border-slate-700 py-1 text-xs hover:bg-slate-700">가져오기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Settings & Solvers -->
+        <div class="lg:col-span-6 flex flex-col gap-4">
+            
+            <!-- Inventory Settings (Min ~ Max) -->
+            <div class="bg-slate-900 border border-slate-800 p-4">
+                <h3 class="text-sm font-bold mb-3">조각 수량 조건</h3>
+                <div class="flex items-end overflow-x-auto pb-2 w-full custom-scrollbar">
+                    <!-- Sticky Labels -->
+                    <div class="flex flex-col justify-end gap-1.5 pb-2 pr-3 pl-1 sticky left-0 bg-slate-900 z-10 flex-shrink-0">
+                        <div class="h-6 flex items-center justify-end text-[11px] font-bold text-slate-400">Min</div>
+                        <div class="h-6 flex items-center justify-end text-[11px] font-bold text-slate-400">Max</div>
+                    </div>
+                    <!-- Inventory items generated here -->
+                    <div id="tetro-inventory-list" class="flex gap-[1px] bg-slate-800 border border-slate-800 flex-shrink-0">
+                        <!-- Inventory items generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Solve Button and Clear Button -->
+            <div class="flex gap-2">
+                <button id="solve-btn" class="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 border border-orange-400 transition-colors">
+                    계산하기
+                </button>
+                <button id="clear-board-btn" class="bg-slate-700 hover:bg-slate-600 text-white text-xl font-bold px-6 border border-slate-600 transition-colors" title="보드 비우기">
+                    ↻
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Results Area -->
+    <section id="results-area" class="max-w-5xl mx-auto px-4 mt-6 hidden">
+        <div class="bg-slate-900 border border-slate-800 p-4">
+            
+            <!-- Layout Navigator -->
+            <div id="layout-navigator" class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-800 hidden">
+                <div>
+                    <span id="selected-comb-desc" class="text-sm font-bold text-orange-400">조합 정보</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prev-layout-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30">◀</button>
+                    <span class="text-xs"><span id="current-layout-idx" class="text-orange-400">0</span> / <span id="total-layouts-count">0</span></span>
+                    <button id="next-layout-btn" class="bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-30">▶</button>
+                </div>
+            </div>
+
+            <!-- Combinations Table -->
+            <div class="overflow-x-auto border border-slate-800">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-950 border-b border-slate-800 uppercase">
+                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="attack">공격 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="defense">방어 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="hp">체력 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="evasion">회피 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="accuracy">명중 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="resistance">저항 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-orange-400" data-sort="crit">크리 <span class="sort-icon"></span></th>
+                            <th class="p-2 cursor-pointer hover:text-orange-400 text-right" data-sort="layouts">배치 개수 <span class="sort-icon"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="combinations-tbody" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom Modal Popup System -->
+    <div id="alert-modal" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 p-6 w-full max-w-sm">
+            <h3 id="modal-title" class="text-base font-bold mb-2">알림</h3>
+            <p id="modal-desc" class="text-xs text-slate-400 mb-4">메시지 내용</p>
+            <div class="text-right">
+                <button id="modal-close-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-4 py-2 border border-slate-700">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Solver Loader -->
+    <div id="loader-overlay" class="fixed inset-0 bg-slate-950/90 z-50 flex flex-col items-center justify-center hidden">
+        <div class="w-12 h-12 border-4 border-slate-800 border-t-orange-500 animate-spin mb-4"></div>
+        <p class="text-orange-400 font-bold text-sm">계산 중...</p>
+    </div>
+
+    <script>
+        const PIECE_TYPES = ['attack', 'defense', 'hp', 'evasion', 'accuracy', 'resistance', 'crit'];
+        const PIECE_DEFS = {
+            attack: { id: 1, name: "공격", short: "공", color: "#f97316", bgClass: "bg-orange-500", textClass: "text-orange-950", base: [[0,0], [0,1], [1,0], [1,1]] },
+            defense: { id: 2, name: "방어", short: "방", color: "#eab308", bgClass: "bg-yellow-500", textClass: "text-yellow-950", base: [[0,0], [1,0], [2,0], [3,0]] },
+            hp: { id: 3, name: "체력", short: "체", color: "#ef4444", bgClass: "bg-red-500", textClass: "text-red-950", base: [[0,1], [1,0], [1,1], [1,2]] },
+            evasion: { id: 4, name: "회피", short: "회", color: "#a3e635", bgClass: "bg-lime-500", textClass: "text-lime-950", base: [[0,0], [0,1], [1,1], [2,1]] },
+            accuracy: { id: 5, name: "명중", short: "명", color: "#06b6d4", bgClass: "bg-cyan-500", textClass: "text-cyan-950", base: [[0,0], [0,1], [1,0], [2,0]] },
+            resistance: { id: 6, name: "저항", short: "저", color: "#8b5cf6", bgClass: "bg-purple-500", textClass: "text-purple-950", base: [[0,0], [1,0], [1,1], [2,1]] },
+            crit: { id: 7, name: "크리", short: "크", color: "#ec4899", bgClass: "bg-pink-500", textClass: "text-pink-950", base: [[0,1], [1,0], [1,1], [2,0]] }
+        };
+
+        const PRESETS = [
+            { name: "하트", grid: "000000000001101100011111110111111111011111110001111100000111000000010000000000000" },
+            { name: "검", grid: "000000000000010000000111000000111000000111000000111000011111110000010000000111000" },
+            { name: "다이아", grid: "000000000000111000001111100011111110001111100000111000000010000000000000000000000" },
+            { name: "나무", grid: "000000000000111000001111100000111000000010000000010000000111000000000000000000000" },
+            { name: "사각", grid: "000000000000000000001111110001111110001111110001111110001111110001111110000000000" }
+        ];
+
+        let boardState = new Int8Array(81);
+        let customModeActive = false;
+        
+        // 민맥스 제약 조건 (수량 이상, 이하)
+        let inventoryLimits = {
+            attack: { min: 0, max: 20 }, defense: { min: 0, max: 20 }, hp: { min: 0, max: 20 },
+            evasion: { min: 0, max: 20 }, accuracy: { min: 0, max: 20 }, resistance: { min: 0, max: 20 }, crit: { min: 0, max: 20 }
+        };
+
+        let allUniqueRotations = {};
+        let combinationsList = [];
+        let selectedCombinationIndex = -1; 
+        let selectedLayoutIndex = 0; 
+        let sortField = 'layouts'; 
+        let sortDirection = 'desc'; 
+
+        window.onload = function() {
+            precalculateRotations();
+            setupUI();
+            loadBoardPreset(PRESETS[0]);
+            updateBoardUI();
+        }
+
+        function showCustomAlert(title, msg) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = msg;
+            document.getElementById('alert-modal').classList.remove('hidden');
+        }
+
+        function normalizeCoords(coords) {
+            let minR = Math.min(...coords.map(p => p[0]));
+            let topmost = coords.filter(p => p[0] === minR);
+            let minC = Math.min(...topmost.map(p => p[1]));
+            let shifted = coords.map(p => [p[0] - minR, p[1] - minC]);
+            shifted.sort((a, b) => a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]);
+            return shifted;
+        }
+
+        function rotate90(coords) { return coords.map(p => [p[1], -p[0]]); }
+
+        function precalculateRotations() {
+            for (let type of PIECE_TYPES) {
+                let unique = [];
+                let curr = PIECE_DEFS[type].base;
+                for (let r = 0; r < 4; r++) {
+                    let norm = normalizeCoords(curr);
+                    let strKey = norm.map(p => p.join(',')).join(';');
+                    if (!unique.some(item => item.key === strKey)) unique.push({ key: strKey, coords: norm });
+                    curr = rotate90(curr);
+                }
+                allUniqueRotations[type] = unique.map(item => item.coords);
+            }
+        }
+
+        function loadBoardPreset(preset) {
+            for (let i = 0; i < 81; i++) boardState[i] = preset.grid[i] === '1' ? 1 : 0;
+            updateActiveCount();
+            resetResults();
+        }
+
+        function resetResults() {
+            document.getElementById('results-area').classList.add('hidden');
+            document.getElementById('layout-navigator').classList.add('hidden');
+        }
+
+        function updateActiveCount() {
+            let cnt = 0;
+            for (let i = 0; i < 81; i++) if (boardState[i] === 1) cnt++;
+            document.getElementById('active-count-text').innerText = cnt;
+        }
+
+        function updateBoardUI(solverLayout = null) {
+            const grid = document.getElementById('puzzle-grid');
+            grid.innerHTML = '';
+            for (let i = 0; i < 81; i++) {
+                const cell = document.createElement('div');
+                // 둥근 모서리 및 빈공간(gap) 제거, 각진 보더 (텍스트 관련 속성 제거)
+                cell.className = "flex items-center justify-center select-none cursor-pointer box-border ";
+                
+                if (solverLayout && solverLayout[i] > 0) {
+                    // 고유번호(val)와 조각종류(pId) 분리 추출
+                    const val = solverLayout[i];
+                    const pId = val % 10;
+                    let tDef = Object.values(PIECE_DEFS).find(d => d.id === pId);
+                    
+                    cell.className += `${tDef.bgClass}`;
+                    
+                    const r = Math.floor(i / 9);
+                    const c = i % 9;
+                    
+                    // 같은 색상이더라도 서로 다른 조각(val이 다름)이면 흰색 테두리 출력
+                    let bt = (r === 0 || solverLayout[(r - 1) * 9 + c] !== val) ? 'border-t-[2px] border-t-white z-10' : 'border-t-[1px] border-t-slate-900/60';
+                    let bb = (r === 8 || solverLayout[(r + 1) * 9 + c] !== val) ? 'border-b-[2px] border-b-white z-10' : 'border-b-[1px] border-b-slate-900/60';
+                    let bl = (c === 0 || solverLayout[r * 9 + (c - 1)] !== val) ? 'border-l-[2px] border-l-white z-10' : 'border-l-[1px] border-l-slate-900/60';
+                    let br = (c === 8 || solverLayout[r * 9 + (c + 1)] !== val) ? 'border-r-[2px] border-r-white z-10' : 'border-r-[1px] border-r-slate-900/60';
+                    
+                    cell.className += ` relative ${bt} ${bb} ${bl} ${br}`;
+                } else {
+                    if (boardState[i] === 1) {
+                        cell.className += "bg-slate-700 border-[0.5px] border-slate-800";
+                    } else {
+                        cell.className += "bg-slate-900 border-[0.5px] border-slate-800";
+                    }
+                }
+
+                cell.dataset.idx = i;
+                cell.onclick = function() {
+                    if (customModeActive || !solverLayout) {
+                        const idx = parseInt(this.dataset.idx);
+                        boardState[idx] = boardState[idx] === 1 ? 0 : 1;
+                        updateActiveCount();
+                        updateBoardUI();
+                        document.getElementById('binary-string-input').value = Array.from(boardState).join('');
+                    }
+                };
+                grid.appendChild(cell);
+            }
+        }
+
+        function setupUI() {
+            // Presets
+            const pCont = document.getElementById('presets-container');
+            PRESETS.forEach(p => {
+                const b = document.createElement('button');
+                b.className = "whitespace-nowrap bg-slate-800 border border-slate-700 px-3 py-1.5 text-xs hover:bg-slate-700";
+                b.innerText = p.name;
+                b.onclick = () => { loadBoardPreset(p); updateBoardUI(); };
+                pCont.appendChild(b);
+            });
+
+            // Inventory List (Min ~ Max)
+            const iCont = document.getElementById('tetro-inventory-list');
+            PIECE_TYPES.forEach(type => {
+                const def = PIECE_DEFS[type];
+                const div = document.createElement('div');
+                // 각진 모양(rounded-none), 테두리는 부모의 1px gap으로 처리
+                div.className = "flex flex-col items-center bg-slate-950 p-2 w-[56px] sm:w-[64px]";
+                
+                // 4x4 캔버스로 미니 테트로 이미지 렌더링 (가운데 정렬 연산 포함)
+                const blocks = def.base;
+                let minR = Math.min(...blocks.map(b => b[0]));
+                let maxR = Math.max(...blocks.map(b => b[0]));
+                let minC = Math.min(...blocks.map(b => b[1]));
+                let maxC = Math.max(...blocks.map(b => b[1]));
+                let offsetR = Math.floor((4 - (maxR - minR + 1)) / 2) - minR;
+                let offsetC = Math.floor((4 - (maxC - minC + 1)) / 2) - minC;
+
+                let miniGridHTML = `<div class="grid grid-rows-4 grid-cols-4 gap-[1px] w-6 h-6 mb-2">`;
+                for (let r = 0; r < 4; r++) {
+                    for (let c = 0; c < 4; c++) {
+                        // 오프셋을 적용하여 박스 정중앙에 퍼즐 조각이 그려지도록 배치
+                        const hasBlock = blocks.some(p => (p[0] + offsetR) === r && (p[1] + offsetC) === c);
+                        const blockBg = hasBlock ? def.bgClass : 'bg-transparent';
+                        miniGridHTML += `<div class="${blockBg}"></div>`;
+                    }
+                }
+                miniGridHTML += `</div>`;
+
+                // 둥근 모서리 삭제(rounded-none) 및 내부 간격 최적화
+                div.innerHTML = `
+                    ${miniGridHTML}
+                    <span class="text-xs font-bold mb-3 text-slate-200">${def.name}</span>
+                    <div class="flex flex-col gap-1.5 w-full">
+                        <input type="number" id="min-${type}" class="w-full h-6 bg-slate-900 border border-slate-700 text-xs text-center text-slate-200 focus:border-orange-500 outline-none rounded-none p-0" value="0" min="0" max="20" onchange="updateLimit('${type}', 'min', this.value)">
+                        <input type="number" id="max-${type}" class="w-full h-6 bg-slate-900 border border-slate-700 text-xs text-center text-slate-200 focus:border-orange-500 outline-none rounded-none p-0" value="20" min="0" max="20" onchange="updateLimit('${type}', 'max', this.value)">
+                    </div>
+                `;
+                iCont.appendChild(div);
+            });
+
+            // Toggles & Buttons
+            document.getElementById('custom-mode-toggle').onchange = function() {
+                customModeActive = this.checked;
+                document.getElementById('custom-tools-panel').style.display = customModeActive ? 'block' : 'none';
+                if(customModeActive) document.getElementById('binary-string-input').value = Array.from(boardState).join('');
+            };
+
+            document.getElementById('modal-close-btn').onclick = () => document.getElementById('alert-modal').classList.add('hidden');
+            document.getElementById('solve-btn').onclick = startSolver;
+            document.getElementById('clear-board-btn').onclick = () => {
+                boardState.fill(0); updateActiveCount(); updateBoardUI(); resetResults();
+            };
+
+            // Custom Binary Data
+            document.getElementById('apply-binary-btn').onclick = () => {
+                const raw = document.getElementById('binary-string-input').value.trim();
+                if (raw.length !== 81 || !/^[01]+$/.test(raw)) return showCustomAlert("오류", "81자리의 0과 1로 된 문자열이 필요합니다.");
+                for (let i = 0; i < 81; i++) boardState[i] = raw[i] === '1' ? 1 : 0;
+                updateActiveCount(); updateBoardUI(); showCustomAlert("성공", "적용되었습니다.");
+            };
+            document.getElementById('refresh-binary-btn').onclick = () => document.getElementById('binary-string-input').value = Array.from(boardState).join('');
+            
+            document.getElementById('export-file-btn').onclick = () => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([Array.from(boardState).join('')], {type: 'text/plain'}));
+                a.download = 'tetro_board.txt'; a.click();
+            };
+            
+            document.getElementById('import-file-btn').onclick = () => {
+                const f = document.createElement('input'); f.type = 'file'; f.accept = '.txt';
+                f.onchange = e => {
+                    const reader = new FileReader();
+                    reader.onload = evt => {
+                        document.getElementById('binary-string-input').value = evt.target.result.trim();
+                        document.getElementById('apply-binary-btn').click();
+                    };
+                    reader.readAsText(e.target.files[0]);
+                };
+                f.click();
+            };
+
+            // Navigator
+            document.getElementById('prev-layout-btn').onclick = () => navLayout(-1);
+            document.getElementById('next-layout-btn').onclick = () => navLayout(1);
+
+            // Sorting
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.onclick = function() {
+                    const f = this.dataset.sort;
+                    if (sortField === f) sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    else { sortField = f; sortDirection = 'desc'; }
+                    renderTable();
+                }
+            });
+        }
+
+        window.updateLimit = function(type, bound, val) {
+            let v = parseInt(val);
+            if(isNaN(v) || v < 0) v = 0;
+            if(v > 20) v = 20;
+            inventoryLimits[type][bound] = v;
+            document.getElementById(`${bound}-${type}`).value = v;
+        }
+
+        // Solver Logic - 고유번호 저장을 위해 Int16Array로 확장
+        let sActive = [], sGrid = new Int16Array(81), gMap = {}, totalFound = 0, stepCnt = 0;
+        const MAX_STEPS = 150000, MAX_SOLS = 250;
+
+        function startSolver() {
+            let cnt = 0; sActive = [];
+            for (let i = 0; i < 81; i++) if (boardState[i] === 1) { cnt++; sActive.push(i); }
+            if (cnt === 0) return showCustomAlert("오류", "보드판이 비어있습니다.");
+            if (cnt % 4 !== 0) return showCustomAlert("오류", `활성 칸(${cnt}개)이 4의 배수가 아닙니다.`);
+
+            document.getElementById('loader-overlay').classList.remove('hidden');
+            setTimeout(runBacktrack, 50);
+        }
+
+        function runBacktrack() {
+            gMap = {}; totalFound = 0; stepCnt = 0;
+            sGrid = new Int16Array(81);
+            for (let i = 0; i < 81; i++) sGrid[i] = boardState[i] === 1 ? 0 : -1;
+            
+            let counts = { attack:0, defense:0, hp:0, evasion:0, accuracy:0, resistance:0, crit:0 };
+            solveRecurse(0, counts, 1);
+
+            document.getElementById('loader-overlay').classList.add('hidden');
+
+            combinationsList = [];
+            for (let key in gMap) {
+                const p = key.split(',').map(Number);
+                combinationsList.push({ key, counts: {attack:p[0], defense:p[1], hp:p[2], evasion:p[3], accuracy:p[4], resistance:p[5], crit:p[6]}, layouts: gMap[key] });
+            }
+
+            if (combinationsList.length === 0) {
+                resetResults(); updateBoardUI();
+                return showCustomAlert("결과 없음", "조건에 맞는 해답이 없습니다. 조각 범위를 조절해보세요.");
+            }
+
+            document.getElementById('results-area').classList.remove('hidden');
+            sortField = 'layouts'; sortDirection = 'desc';
+            renderTable();
+            selectComb(0);
+        }
+
+        // placedCount 파라미터를 추가하여 조각이 배치될 때마다 1씩 증가시킨 고유 ID 부여
+        function solveRecurse(ptr, counts, placedCount) {
+            if (totalFound >= MAX_SOLS || stepCnt >= MAX_STEPS) return;
+            stepCnt++;
+
+            if (ptr >= sActive.length) {
+                // Min 조건 검사 (배치 완료 후)
+                for (let type of PIECE_TYPES) {
+                    if (counts[type] < inventoryLimits[type].min) return;
+                }
+                const key = PIECE_TYPES.map(t => counts[t]).join(',');
+                if (!gMap[key]) gMap[key] = [];
+                gMap[key].push(new Int16Array(sGrid));
+                totalFound++;
+                return;
+            }
+
+            const idx = sActive[ptr];
+            if (sGrid[idx] > 0) return solveRecurse(ptr + 1, counts, placedCount);
+
+            const r = Math.floor(idx / 9), c = idx % 9;
+
+            for (let type of PIECE_TYPES) {
+                // Max 조건 검사 (배치 전 가지치기)
+                if (counts[type] >= inventoryLimits[type].max) continue;
+
+                const pId = PIECE_DEFS[type].id;
+                // 고유값(val) 생성 = 몇 번째 조각인지 식별 + 조각 타입 아이디
+                const val = placedCount * 10 + pId;
+                
+                for (let rot of allUniqueRotations[type]) {
+                    let can = true;
+                    for (let p of rot) {
+                        const nr = r + p[0], nc = c + p[1];
+                        if (nr < 0 || nr >= 9 || nc < 0 || nc >= 9 || sGrid[nr * 9 + nc] !== 0) { can = false; break; }
+                    }
+                    if (can) {
+                        for (let p of rot) sGrid[(r + p[0]) * 9 + (c + p[1])] = val;
+                        counts[type]++;
+                        solveRecurse(ptr + 1, counts, placedCount + 1);
+                        for (let p of rot) sGrid[(r + p[0]) * 9 + (c + p[1])] = 0;
+                        counts[type]--;
+                    }
+                }
+            }
+        }
+
+        function renderTable() {
+            combinationsList.sort((a, b) => {
+                let vA = sortField === 'layouts' ? a.layouts.length : a.counts[sortField];
+                let vB = sortField === 'layouts' ? b.layouts.length : b.counts[sortField];
+                if (vA === vB) return b.layouts.length - a.layouts.length;
+                return sortDirection === 'asc' ? vA - vB : vB - vA;
+            });
+
+            document.querySelectorAll('.sort-icon').forEach(el => el.innerText = ' ↕');
+            const thIcon = document.querySelector(`th[data-sort="${sortField}"] .sort-icon`);
+            if (thIcon) thIcon.innerText = sortDirection === 'asc' ? ' ▲' : ' ▼';
+
+            const tb = document.getElementById('combinations-tbody');
+            tb.innerHTML = '';
+            combinationsList.forEach((c, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = `cursor-pointer hover:bg-slate-800 transition-colors ${selectedCombinationIndex === idx ? 'bg-orange-900/30 border-l-2 border-orange-500' : ''}`;
+                tr.onclick = () => selectComb(idx);
+                
+                let tdStr = '';
+                PIECE_TYPES.forEach(t => {
+                    const cnt = c.counts[t];
+                    tdStr += `<td class="p-2" style="color:${cnt>0 ? PIECE_DEFS[t].color : '#475569'}; font-weight:${cnt>0?'bold':'normal'}">${cnt}</td>`;
+                });
+                tr.innerHTML = `${tdStr}<td class="p-2 text-right text-orange-400 font-bold">${c.layouts.length}</td>`;
+                tb.appendChild(tr);
+            });
+        }
+
+        function selectComb(idx) {
+            if (idx < 0 || idx >= combinationsList.length) return;
+            selectedCombinationIndex = idx; selectedLayoutIndex = 0;
+            const c = combinationsList[idx];
+            let parts = [];
+            PIECE_TYPES.forEach(t => { if(c.counts[t] > 0) parts.push(`${PIECE_DEFS[t].name} ${c.counts[t]}`); });
+            document.getElementById('selected-comb-desc').innerText = parts.join(' / ');
+            document.getElementById('total-layouts-count').innerText = c.layouts.length;
+            renderTable(); updateNav();
+        }
+
+        function updateNav() {
+            const nav = document.getElementById('layout-navigator');
+            nav.classList.remove('hidden');
+            const c = combinationsList[selectedCombinationIndex];
+            document.getElementById('current-layout-idx').innerText = selectedLayoutIndex + 1;
+            document.getElementById('prev-layout-btn').disabled = selectedLayoutIndex === 0;
+            document.getElementById('next-layout-btn').disabled = selectedLayoutIndex === c.layouts.length - 1;
+            updateBoardUI(c.layouts[selectedLayoutIndex]);
+        }
+
+        function navLayout(dir) {
+            const c = combinationsList[selectedCombinationIndex];
+            let nx = selectedLayoutIndex + dir;
+            if (nx >= 0 && nx < c.layouts.length) { selectedLayoutIndex = nx; updateNav(); }
+        }
+    </script>
+</body>
+</html>
